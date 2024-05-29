@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# This script builds and installs hiredis and hiredis-cluster using
+# This script builds and installs libvalkey and libvalkeycluster using
 # CMakes ExternalProject module.
 # The shared library variants are used when building the examples.
 

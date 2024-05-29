@@ -1,33 +1,28 @@
 #!/bin/sh
 set -e
 
-# This script builds and installs hiredis and hiredis-cluster as separate
+# This script builds and installs libvalkey and libvalkeycluster as separate
 # steps using CMake.
 # The shared library variants are used when building the examples.
 
 script_dir=$(realpath "${0%/*}")
 repo_dir=$(git rev-parse --show-toplevel)
 
-# Download hiredis
-hiredis_version=1.1.0
-curl -L https://github.com/redis/hiredis/archive/v${hiredis_version}.tar.gz | tar -xz -C ${script_dir}
-
-# Build and install downloaded hiredis using CMake
-mkdir -p ${script_dir}/hiredis_build
-cd ${script_dir}/hiredis_build
+# Build and install libvalkey from the repo using CMake.
+mkdir -p ${script_dir}/libvalkey_build
+cd ${script_dir}/libvalkey_build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_TESTS=ON -DENABLE_SSL=ON \
-      -DCMAKE_C_FLAGS="-std=c99" \
-      ${script_dir}/hiredis-${hiredis_version}
+      ${repo_dir}/libvalkey
 make DESTDIR=${script_dir}/install install
 
 
-# Build and install hiredis-cluster from the repo using CMake.
-mkdir -p ${script_dir}/hiredis_cluster_build
-cd ${script_dir}/hiredis_cluster_build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_TESTS=ON -DENABLE_SSL=ON -DDOWNLOAD_HIREDIS=OFF \
+# Build and install libvalkeycluster from the repo using CMake.
+mkdir -p ${script_dir}/libvalkeycluster_build
+cd ${script_dir}/libvalkeycluster_build
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_TESTS=ON -DENABLE_SSL=ON \
       -DCMAKE_PREFIX_PATH=${script_dir}/install/usr/local \
-      ${repo_dir}
-make DESTDIR=${script_dir}/install clean install
+      ${repo_dir}/libvalkeycluster
+make DESTDIR=${script_dir}/install install
 
 
 # Build examples using headers and libraries installed in previous steps.

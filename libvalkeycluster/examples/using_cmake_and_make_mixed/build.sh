@@ -1,35 +1,32 @@
 #!/bin/sh
 set -e
 
-# This script builds and installs hiredis using GNU Make and hiredis-cluster using CMake.
+# This script builds and installs libvalkey using GNU Make and libvalkeycluster using CMake.
 # The shared library variants are used when building the examples.
 
 script_dir=$(realpath "${0%/*}")
 repo_dir=$(git rev-parse --show-toplevel)
 
-# Download hiredis
-hiredis_version=1.1.0
-curl -L https://github.com/redis/hiredis/archive/v${hiredis_version}.tar.gz | tar -xz -C ${script_dir}
-
-# Build and install downloaded hiredis using GNU Make
-make -C ${script_dir}/hiredis-${hiredis_version} \
+# Build and install libvalkey from the repo using GNU Make
+make -C ${repo_dir}/libvalkey \
      USE_SSL=1 \
      DESTDIR=${script_dir}/install \
-     all install
+     clean all install
 
 
-# Build and install hiredis-cluster from the repo using CMake.
-mkdir -p ${script_dir}/hiredis_cluster_build
-cd ${script_dir}/hiredis_cluster_build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_TESTS=ON -DENABLE_SSL=ON -DDOWNLOAD_HIREDIS=OFF \
+# Build and install libvalkey-cluster from the repo using CMake.
+mkdir -p ${script_dir}/libvalkeycluster_build
+cd ${script_dir}/libvalkeycluster_build
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDISABLE_TESTS=ON -DENABLE_SSL=ON \
       -DCMAKE_PREFIX_PATH=${script_dir}/install/usr/local \
-      ${repo_dir}
-make DESTDIR=${script_dir}/install clean install
+      ${repo_dir}/libvalkeycluster
+make DESTDIR=${script_dir}/install install
 
 
 # Build example binaries by providing shared libraries
-make -C ${repo_dir} CFLAGS="-I${script_dir}/install/usr/local/include" \
-     LDFLAGS="-lhiredis_cluster -lhiredis_cluster_ssl -lhiredis -lhiredis_ssl \
+make -C ${repo_dir}/libvalkeycluster \
+     CFLAGS="-I${script_dir}/install/usr/local/include" \
+     LDFLAGS="-lvalkeycluster -lvalkeycluster_ssl -lvalkey -lvalkey_ssl \
               -L${script_dir}/install/usr/local/lib/ \
               -Wl,-rpath=${script_dir}/install/usr/local/lib/" \
      USE_SSL=1 \

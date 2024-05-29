@@ -1,23 +1,23 @@
-# Hiredis-cluster Makefile, based on the Makefile in hiredis.
+# Libvalkeycluster Makefile
 #
 # Copyright (C) 2021 Bjorn Svensson <bjorn.a.svensson@est.tech>
 # Copyright (C) 2010-2011 Salvatore Sanfilippo <antirez at gmail dot com>
 # Copyright (C) 2010-2011 Pieter Noordhuis <pcnoordhuis at gmail dot com>
 # This file is released under the BSD license, see the COPYING file
 
-OBJ=adlist.o command.o crc16.o dict.o hiarray.o hircluster.o hiutil.o
-EXAMPLES=hiredis-cluster-example
-LIBNAME=libhiredis_cluster
-PKGCONFNAME=hiredis_cluster.pc
+OBJ=adlist.o command.o crc16.o dict.o vkarray.o valkeycluster.o vkutil.o
+EXAMPLES=valkeycluster-example
+LIBNAME=libvalkeycluster
+PKGCONFNAME=valkeycluster.pc
 
-HIREDIS_CLUSTER_MAJOR=$(shell grep HIREDIS_CLUSTER_MAJOR hircluster.h | awk '{print $$3}')
-HIREDIS_CLUSTER_MINOR=$(shell grep HIREDIS_CLUSTER_MINOR hircluster.h | awk '{print $$3}')
-HIREDIS_CLUSTER_PATCH=$(shell grep HIREDIS_CLUSTER_PATCH hircluster.h | awk '{print $$3}')
-HIREDIS_CLUSTER_SONAME=$(shell grep HIREDIS_CLUSTER_SONAME hircluster.h | awk '{print $$3}')
+LIBVALKEYCLUSTER_MAJOR=$(shell grep LIBVALKEYCLUSTER_MAJOR valkeycluster.h | awk '{print $$3}')
+LIBVALKEYCLUSTER_MINOR=$(shell grep LIBVALKEYCLUSTER_MINOR valkeycluster.h | awk '{print $$3}')
+LIBVALKEYCLUSTER_PATCH=$(shell grep LIBVALKEYCLUSTER_PATCH valkeycluster.h | awk '{print $$3}')
+LIBVALKEYCLUSTER_SONAME=$(shell grep LIBVALKEYCLUSTER_SONAME valkeycluster.h | awk '{print $$3}')
 
 # Installation related variables and target
 PREFIX?=/usr/local
-INCLUDE_PATH?=include/hiredis_cluster
+INCLUDE_PATH?=include/valkeycluster
 LIBRARY_PATH?=lib
 PKGCONF_PATH?=pkgconfig
 INSTALL_INCLUDE_PATH= $(DESTDIR)$(PREFIX)/$(INCLUDE_PATH)
@@ -34,20 +34,20 @@ REAL_LDFLAGS=$(LDFLAGS)
 
 DYLIBSUFFIX=so
 STLIBSUFFIX=a
-DYLIB_MINOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_CLUSTER_SONAME)
-DYLIB_MAJOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_CLUSTER_MAJOR)
+DYLIB_MINOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(LIBVALKEYCLUSTER_SONAME)
+DYLIB_MAJOR_NAME=$(LIBNAME).$(DYLIBSUFFIX).$(LIBVALKEYCLUSTER_MAJOR)
 DYLIBNAME=$(LIBNAME).$(DYLIBSUFFIX)
 
 DYLIB_MAKE_CMD=$(CC) -shared -Wl,-soname,$(DYLIB_MINOR_NAME)
 STLIBNAME=$(LIBNAME).$(STLIBSUFFIX)
 STLIB_MAKE_CMD=$(AR) rcs
 
-SSL_OBJ=hircluster_ssl.o
-SSL_LIBNAME=libhiredis_cluster_ssl
-SSL_PKGCONFNAME=hiredis_cluster_ssl.pc
+SSL_OBJ=valkeycluster_ssl.o
+SSL_LIBNAME=libvalkeycluster_ssl
+SSL_PKGCONFNAME=valkeycluster_ssl.pc
 SSL_INSTALLNAME=install-ssl
-SSL_DYLIB_MINOR_NAME=$(SSL_LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_SONAME)
-SSL_DYLIB_MAJOR_NAME=$(SSL_LIBNAME).$(DYLIBSUFFIX).$(HIREDIS_MAJOR)
+SSL_DYLIB_MINOR_NAME=$(SSL_LIBNAME).$(DYLIBSUFFIX).$(LIBVALKEYCLUSTER_SONAME)
+SSL_DYLIB_MAJOR_NAME=$(SSL_LIBNAME).$(DYLIBSUFFIX).$(LIBVALKEYCLUSTER_MAJOR)
 SSL_DYLIBNAME=$(SSL_LIBNAME).$(DYLIBSUFFIX)
 SSL_STLIBNAME=$(SSL_LIBNAME).$(STLIBSUFFIX)
 SSL_DYLIB_MAKE_CMD=$(CC) -shared -Wl,-soname,$(SSL_DYLIB_MINOR_NAME)
@@ -58,7 +58,7 @@ ifeq ($(USE_SSL),1)
   SSL_DYLIB=$(SSL_DYLIBNAME)
   SSL_PKGCONF=$(SSL_PKGCONFNAME)
   SSL_INSTALL=$(SSL_INSTALLNAME)
-  EXAMPLES+=hiredis-cluster-example-tls
+  EXAMPLES+=valkeycluster-example-tls
 endif
 
 # Platform-specific overrides
@@ -73,16 +73,16 @@ endif
 all: $(DYLIBNAME) $(SSL_DYLIBNAME) $(STLIBNAME) $(SSL_STLIBNAME) $(PKGCONFNAME) $(SSL_PKGCONFNAME)
 
 # Deps (use `USE_SSL=1 make dep` to generate this)
-adlist.o: adlist.c adlist.h hiutil.h
-command.o: command.c command.h adlist.h cmddef.h hiarray.h hiutil.h \
+adlist.o: adlist.c adlist.h vkutil.h
+command.o: command.c command.h adlist.h cmddef.h vkarray.h vkutil.h \
  win32.h
-crc16.o: crc16.c hiutil.h
+crc16.o: crc16.c vkutil.h
 dict.o: dict.c dict.h
-hiarray.o: hiarray.c hiarray.h hiutil.h
-hircluster.o: hircluster.c adlist.h command.h cmddef.h dict.h hiarray.h \
- hircluster.h hiutil.h win32.h
-hiutil.o: hiutil.c hiutil.h win32.h
-hircluster_ssl.o: hircluster_ssl.c hircluster_ssl.h hircluster.h dict.h
+vkarray.o: vkarray.c vkarray.h vkutil.h
+valkeycluster.o: valkeycluster.c adlist.h command.h cmddef.h dict.h vkarray.h \
+ valkeycluster.h vkutil.h win32.h
+vkutil.o: vkutil.c vkutil.h win32.h
+valkeycluster_ssl.o: valkeycluster_ssl.c valkeycluster_ssl.h valkeycluster.h dict.h
 
 $(DYLIBNAME): $(OBJ)
 	$(DYLIB_MAKE_CMD) -o $(DYLIBNAME) $(OBJ) $(REAL_LDFLAGS)
@@ -96,15 +96,15 @@ $(SSL_DYLIBNAME): $(SSL_OBJ)
 $(SSL_STLIBNAME): $(SSL_OBJ)
 	$(STLIB_MAKE_CMD) $(SSL_STLIBNAME) $(SSL_OBJ)
 
-$(SSL_OBJ): hircluster_ssl.c
+$(SSL_OBJ): valkeycluster_ssl.c
 
 dynamic: $(DYLIBNAME) $(SSL_DYLIB)
 static: $(STLIBNAME) $(SSL_STLIB)
 
 # Binaries:
-hiredis-cluster-example: examples/src/example.c
+valkeycluster-example: examples/src/example.c
 	$(CC) -o examples/$@ $(REAL_CFLAGS) $< $(REAL_LDFLAGS)
-hiredis-cluster-example-tls: examples/src/example_tls.c
+valkeycluster-example-tls: examples/src/example_tls.c
 	$(CC) -o examples/$@ $(REAL_CFLAGS) $< $(REAL_LDFLAGS)
 
 examples: $(EXAMPLES)
@@ -113,43 +113,43 @@ examples: $(EXAMPLES)
 	$(CC) -c $(REAL_CFLAGS) $<
 
 clean:
-	rm -rf $(DYLIBNAME) $(STLIBNAME) $(SSL_DYLIBNAME) $(SSL_STLIBNAME) $(PKGCONFNAME) $(SSL_PKGCONFNAME) examples/hiredis-cluster-example* *.o *.gcda *.gcno *.gcov
+	rm -rf $(DYLIBNAME) $(STLIBNAME) $(SSL_DYLIBNAME) $(SSL_STLIBNAME) $(PKGCONFNAME) $(SSL_PKGCONFNAME) examples/valkeycluster-example* *.o *.gcda *.gcno *.gcov
 
 dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MM *.c
 
 INSTALL?= cp -pPR
 
-$(PKGCONFNAME): hircluster.h
+$(PKGCONFNAME): valkeycluster.h
 	@echo "Generating $@ for pkgconfig..."
 	@echo prefix=$(PREFIX) > $@
 	@echo exec_prefix=\$${prefix} >> $@
 	@echo libdir=$(PREFIX)/$(LIBRARY_PATH) >> $@
 	@echo includedir=$(PREFIX)/$(INCLUDE_PATH) >> $@
 	@echo >> $@
-	@echo Name: hiredis-cluster >> $@
-	@echo Description: Minimalistic C client library for Redis Cluster. >> $@
-	@echo Version: $(HIREDIS_CLUSTER_MAJOR).$(HIREDIS_CLUSTER_MINOR).$(HIREDIS_CLUSTER_PATCH) >> $@
-	@echo Libs: -L\$${libdir} -lhiredis_cluster >> $@
+	@echo Name: valkeycluster >> $@
+	@echo Description: Minimalistic C client library for Valkey Cluster. >> $@
+	@echo Version: $(LIBVALKEYCLUSTER_MAJOR).$(LIBVALKEYCLUSTER_MINOR).$(LIBVALKEYCLUSTER_PATCH) >> $@
+	@echo Libs: -L\$${libdir} -lvalkeycluster >> $@
 	@echo Cflags: -I\$${includedir} -D_FILE_OFFSET_BITS=64 >> $@
 
-$(SSL_PKGCONFNAME): hircluster_ssl.h
+$(SSL_PKGCONFNAME): valkeycluster_ssl.h
 	@echo "Generating $@ for pkgconfig..."
 	@echo prefix=$(PREFIX) > $@
 	@echo exec_prefix=\$${prefix} >> $@
 	@echo libdir=$(PREFIX)/$(LIBRARY_PATH) >> $@
 	@echo includedir=$(PREFIX)/$(INCLUDE_PATH) >> $@
 	@echo >> $@
-	@echo Name: hiredis-cluster-ssl >> $@
-	@echo Description: SSL support for hiredis-cluster. >> $@
-	@echo Version: $(HIREDIS_CLUSTER_MAJOR).$(HIREDIS_CLUSTER_MINOR).$(HIREDIS_CLUSTER_PATCH) >> $@
-	@echo Requires: hiredis >> $@
-	@echo Libs: -L\$${libdir} -lhiredis_cluster_ssl >> $@
-	@echo Libs.private: -lhiredis_ssl -lssl -lcrypto >> $@
+	@echo Name: valkeycluster-ssl >> $@
+	@echo Description: SSL support for valkeycluster. >> $@
+	@echo Version: $(LIBVALKEYCLUSTER_MAJOR).$(LIBVALKEYCLUSTER_MINOR).$(LIBVALKEYCLUSTER_PATCH) >> $@
+	@echo Requires: valkey >> $@
+	@echo Libs: -L\$${libdir} -lvalkeycluster_ssl >> $@
+	@echo Libs.private: -lvalkey_ssl -lssl -lcrypto >> $@
 
 install: $(DYLIBNAME) $(STLIBNAME) $(PKGCONFNAME) $(SSL_INSTALL)
 	mkdir -p $(INSTALL_INCLUDE_PATH) $(INSTALL_INCLUDE_PATH)/adapters $(INSTALL_LIBRARY_PATH)
-	$(INSTALL) adlist.h dict.h hiarray.h hircluster.h hiutil.h win32.h $(INSTALL_INCLUDE_PATH)
+	$(INSTALL) adlist.h dict.h vkarray.h valkeycluster.h vkutil.h win32.h $(INSTALL_INCLUDE_PATH)
 	$(INSTALL) adapters/*.h $(INSTALL_INCLUDE_PATH)/adapters
 	$(INSTALL) $(DYLIBNAME) $(INSTALL_LIBRARY_PATH)/$(DYLIB_MINOR_NAME)
 	cd $(INSTALL_LIBRARY_PATH) && ln -sf $(DYLIB_MINOR_NAME) $(DYLIBNAME)
@@ -159,7 +159,7 @@ install: $(DYLIBNAME) $(STLIBNAME) $(PKGCONFNAME) $(SSL_INSTALL)
 
 install-ssl: $(SSL_DYLIBNAME) $(SSL_STLIBNAME) $(SSL_PKGCONFNAME)
 	mkdir -p $(INSTALL_INCLUDE_PATH) $(INSTALL_LIBRARY_PATH)
-	$(INSTALL) hircluster_ssl.h $(INSTALL_INCLUDE_PATH)
+	$(INSTALL) valkeycluster_ssl.h $(INSTALL_INCLUDE_PATH)
 	$(INSTALL) $(SSL_DYLIBNAME) $(INSTALL_LIBRARY_PATH)/$(SSL_DYLIB_MINOR_NAME)
 	cd $(INSTALL_LIBRARY_PATH) && ln -sf $(SSL_DYLIB_MINOR_NAME) $(SSL_DYLIBNAME)
 	$(INSTALL) $(SSL_STLIBNAME) $(INSTALL_LIBRARY_PATH)

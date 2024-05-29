@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
-project(hiredis-cluster)
+project(valkeycluster)
 include(GNUInstallDirs)
 
 # Options
-option(DOWNLOAD_HIREDIS  "Download the dependency hiredis from GitHub" ON)
 option(ENABLE_SSL        "Enable SSL/TLS support" OFF)
 option(DISABLE_TESTS     "Disable compilation of test" OFF)
 option(ENABLE_IPV6_TESTS "Enable IPv6 tests requiring special prerequisites" OFF)
@@ -11,20 +10,20 @@ option(ENABLE_COVERAGE   "Enable test coverage reporting" OFF)
 
 macro(getVersionBit name)
   set(VERSION_REGEX "^#define ${name} (.+)$")
-  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/hircluster.h"
+  file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/valkeycluster.h"
     VERSION_BIT REGEX ${VERSION_REGEX})
   string(REGEX REPLACE ${VERSION_REGEX} "\\1" ${name} "${VERSION_BIT}")
 endmacro(getVersionBit)
 
 # Get version information from src
-getVersionBit(HIREDIS_CLUSTER_MAJOR)
-getVersionBit(HIREDIS_CLUSTER_MINOR)
-getVersionBit(HIREDIS_CLUSTER_PATCH)
-getVersionBit(HIREDIS_CLUSTER_SONAME)
-set(VERSION "${HIREDIS_CLUSTER_MAJOR}.${HIREDIS_CLUSTER_MINOR}.${HIREDIS_CLUSTER_PATCH}")
+getVersionBit(LIBVALKEYCLUSTER_MAJOR)
+getVersionBit(LIBVALKEYCLUSTER_MINOR)
+getVersionBit(LIBVALKEYCLUSTER_PATCH)
+getVersionBit(LIBVALKEYCLUSTER_SONAME)
+set(VERSION "${LIBVALKEYCLUSTER_MAJOR}.${LIBVALKEYCLUSTER_MINOR}.${LIBVALKEYCLUSTER_PATCH}")
 message("Detected version: ${VERSION}")
 
-project(hiredis-cluster
+project(valkeycluster
   VERSION "${VERSION}"
   LANGUAGES C)
 
@@ -42,135 +41,76 @@ if(ENABLE_COVERAGE)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage" )
 endif()
 
-SET(hiredis_cluster_sources
+SET(valkeycluster_sources
     adlist.c
     command.c
     crc16.c
     dict.c
-    hiarray.c
-    hircluster.c
-    hiutil.c)
+    vkarray.c
+    valkeycluster.c
+    vkutil.c)
 
 if(WIN32 OR MINGW)
     add_compile_definitions(_CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN)
-    set(hiredis_cluster_sources
-        ${hiredis_cluster_sources}
-        hiredis_cluster.def)
 endif()
 
-add_library(hiredis_cluster
+add_library(valkeycluster
   SHARED
-  ${hiredis_cluster_sources})
+  ${valkeycluster_sources})
 
 if(NOT MSVC)
-  target_compile_options(hiredis_cluster PRIVATE -Wall -Wextra -pedantic -Werror
+  target_compile_options(valkeycluster PRIVATE -Wall -Wextra -pedantic -Werror
     -Wstrict-prototypes -Wwrite-strings -Wno-missing-field-initializers)
 
   # Add extra defines when CMAKE_BUILD_TYPE is set to Debug
-  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DHI_ASSERT_PANIC -DHI_HAVE_BACKTRACE")
-  # Alternative: -DHI_ASSERT_LOG)
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DVK_ASSERT_PANIC -DVK_HAVE_BACKTRACE")
+  # Alternative: -DVK_ASSERT_LOG)
 endif()
 
-set_target_properties(hiredis_cluster
+set_target_properties(valkeycluster
     PROPERTIES
-    VERSION "${HIREDIS_CLUSTER_SONAME}")
+    WINDOWS_EXPORT_ALL_SYMBOLS TRUE
+    VERSION "${LIBVALKEYCLUSTER_SONAME}")
 
-if(DOWNLOAD_HIREDIS)
-  if(${CMAKE_VERSION} VERSION_LESS "3.20")
-    message(FATAL_ERROR
-      "Downloading of the dependency 'hiredis' requires CMake >= v3.20.\n"
-      "Upgrade CMake or manually install 'hiredis' and use -DDOWNLOAD_HIREDIS=OFF")
-  endif()
-
-  set(HIREDIS_VERSION "1.2.0")
-  message("Downloading dependency: hiredis v${HIREDIS_VERSION}")
-
-  include(FetchContent)
-  FetchContent_Declare(hiredis
-    GIT_REPOSITORY https://github.com/redis/hiredis
-    GIT_TAG        "v${HIREDIS_VERSION}"
-    SOURCE_DIR     "${CMAKE_CURRENT_BINARY_DIR}/_deps/hiredis"
-  )
-
-  # Disable tests in hiredis
-  set(DISABLE_TESTS_OLD ${DISABLE_TESTS})
-  set(DISABLE_TESTS ON CACHE INTERNAL "")
-  FetchContent_GetProperties(hiredis)
-  if(NOT hiredis_POPULATED)
-    FetchContent_Populate(hiredis)
-    add_subdirectory(${hiredis_SOURCE_DIR} ${hiredis_BINARY_DIR})
-  endif()
-  set(DISABLE_TESTS ${DISABLE_TESTS_OLD} CACHE INTERNAL "")
-
-  # Create an empty *-config.cmake for find_package
-  # See: https://github.com/abandonware-pjz37/cmake-find-package-include/blob/master/hooks/fetch.cmake
-  set(stub_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/pkg")
-
-  file(WRITE "${stub_dir}/hiredis-config.cmake" "")
-  file(WRITE "${stub_dir}/hiredis-config-version.cmake" "set(PACKAGE_VERSION ${HIREDIS_VERSION})")
-  set(hiredis_DIR ${stub_dir})
-  # Set variables normally got from hiredis-config.cmake
-  set(hiredis_LIBRARIES hiredis::hiredis)
-  set(hiredis_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/_deps")
-
-  if(ENABLE_SSL)
-    file(WRITE "${stub_dir}/hiredis_ssl-config.cmake" "")
-    set(hiredis_ssl_DIR ${stub_dir})
-  endif()
-
-else()
-  message("Expecting to find dependencies in path..")
+find_package(valkey QUIET)
+if(NOT valkey_FOUND)
+  message("CMake package for 'valkey' not found, searching for the library..")
+  find_library(VALKEY_LIB valkey REQUIRED)
+  find_path(VALKEY_INCLUDES valkey/valkey.h)
+  add_library(valkey::valkey UNKNOWN IMPORTED GLOBAL)
+  set_target_properties(valkey::valkey PROPERTIES IMPORTED_LOCATION ${VALKEY_LIB})
+  set_target_properties(valkey::valkey PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${VALKEY_INCLUDES})
 endif()
 
-find_package(hiredis QUIET)
-if(NOT hiredis_FOUND)
-  message("CMake package for 'hiredis' not found, searching for the library..")
-  find_library(HIREDIS_LIB hiredis REQUIRED)
-  find_path(HIREDIS_INCLUDES hiredis/hiredis.h)
-  add_library(hiredis::hiredis UNKNOWN IMPORTED GLOBAL)
-  set_target_properties(hiredis::hiredis PROPERTIES IMPORTED_LOCATION ${HIREDIS_LIB})
-  set_target_properties(hiredis::hiredis PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${HIREDIS_INCLUDES})
-endif()
-
-if(NOT TARGET hiredis::hiredis)
-  # Add target to support older hiredis releases
-  add_library(hiredis::hiredis ALIAS hiredis)
-endif()
-
-target_include_directories(hiredis_cluster PUBLIC
-  $<BUILD_INTERFACE:${hiredis_INCLUDE_DIRS}>
+target_include_directories(valkeycluster PUBLIC
+  $<BUILD_INTERFACE:${valkeys_INCLUDE_DIRS}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include>)
 
 if(WIN32 OR MINGW)
-  target_link_libraries(hiredis_cluster PUBLIC ws2_32 hiredis::hiredis)
+  target_link_libraries(valkeycluster PUBLIC ws2_32 valkey::valkey)
 else()
-  target_link_libraries(hiredis_cluster PUBLIC hiredis::hiredis)
+  target_link_libraries(valkeycluster PUBLIC valkey::valkey)
 endif()
 
 if(ENABLE_SSL)
-  find_package(hiredis_ssl QUIET)
-  if(NOT hiredis_ssl_FOUND)
-    message("CMake package for 'hiredis_ssl' not found, searching for the library..")
-    find_library(HIREDIS_SSL_LIB hiredis_ssl REQUIRED)
-    find_path(HIREDIS_SSL_INCLUDES hiredis/hiredis_ssl.h)
-    add_library(hiredis::hiredis_ssl UNKNOWN IMPORTED GLOBAL)
-    set_target_properties(hiredis::hiredis_ssl PROPERTIES IMPORTED_LOCATION ${HIREDIS_SSL_LIB})
-    set_target_properties(hiredis::hiredis_ssl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${HIREDIS_SSL_INCLUDES})
+  find_package(valkey_ssl QUIET)
+  if(NOT valkey_ssl_FOUND)
+    message("CMake package for 'libvalkey_ssl' not found, searching for the library..")
+    find_library(VALKEY_SSL_LIB valkey_ssl REQUIRED)
+    find_path(VALKEY_SSL_INCLUDES valkey/valkey_ssl.h)
+    add_library(valkey::valkey_ssl UNKNOWN IMPORTED GLOBAL)
+    set_target_properties(valkey::valkey_ssl PROPERTIES IMPORTED_LOCATION ${VALKEY_SSL_LIB})
+    set_target_properties(valkey::valkey_ssl PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${VALKEY_SSL_INCLUDES})
   endif()
 
-  if(NOT TARGET hiredis::hiredis_ssl)
-    # Add target to support older hiredis releases
-    add_library(hiredis::hiredis_ssl ALIAS hiredis_ssl)
-  endif()
-
-  add_library(hiredis_cluster_ssl
-    SHARED hircluster_ssl.c)
-  set_target_properties(hiredis_cluster_ssl
-    PROPERTIES VERSION "${HIREDIS_CLUSTER_SONAME}")
-  target_link_libraries(hiredis_cluster_ssl
-    PRIVATE hiredis_cluster
-    PUBLIC hiredis::hiredis_ssl)
+  add_library(valkeycluster_ssl
+    SHARED valkeycluster_ssl.c)
+  set_target_properties(valkeycluster_ssl
+    PROPERTIES VERSION "${LIBVALKEYCLUSTER_SONAME}")
+  target_link_libraries(valkeycluster_ssl
+    PRIVATE valkeycluster
+    PUBLIC valkey::valkey_ssl)
 endif()
 
 if(NOT DISABLE_TESTS)
@@ -199,69 +139,69 @@ if(ENABLE_COVERAGE)
   add_custom_target (coverage DEPENDS _run_gcovr)
 endif()
 
-configure_file(hiredis_cluster.pc.in hiredis_cluster.pc @ONLY)
+configure_file(valkeycluster.pc.in valkeycluster.pc @ONLY)
 
-install(TARGETS hiredis_cluster
-  EXPORT hiredis_cluster-targets
+install(TARGETS valkeycluster
+  EXPORT valkeycluster-targets
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(FILES hircluster.h adlist.h hiarray.h dict.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hiredis_cluster)
+install(FILES valkeycluster.h adlist.h vkarray.h dict.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/valkeycluster)
 
 install(DIRECTORY adapters
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hiredis_cluster)
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/valkeycluster)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster.pc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
-export(EXPORT hiredis_cluster-targets
-  FILE ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster-targets.cmake
-  NAMESPACE hiredis_cluster::)
+export(EXPORT valkeycluster-targets
+  FILE ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster-targets.cmake
+  NAMESPACE valkeycluster::)
 
-set(CMAKE_CONF_INSTALL_DIR share/hiredis_cluster)
+set(CMAKE_CONF_INSTALL_DIR share/valkeycluster)
 set(INCLUDE_INSTALL_DIR include)
 include(CMakePackageConfigHelpers)
-configure_package_config_file(hiredis_cluster-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster-config.cmake
+configure_package_config_file(valkeycluster-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster-config.cmake
   INSTALL_DESTINATION ${CMAKE_CONF_INSTALL_DIR}
   PATH_VARS INCLUDE_INSTALL_DIR)
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster-config-version.cmake
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/valkeycluster-config-version.cmake
   COMPATIBILITY SameMinorVersion)
 
-install(EXPORT hiredis_cluster-targets
-  FILE hiredis_cluster-targets.cmake
-  NAMESPACE hiredis_cluster::
+install(EXPORT valkeycluster-targets
+  FILE valkeycluster-targets.cmake
+  NAMESPACE valkeycluster::
   DESTINATION ${CMAKE_CONF_INSTALL_DIR})
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster-config.cmake
-              ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster-config-version.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster-config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster-config-version.cmake
   DESTINATION ${CMAKE_CONF_INSTALL_DIR})
 
-# Install target for hiredis_cluster_ssl
+# Install target for valkeycluster_ssl
 if(ENABLE_SSL)
-  configure_file(hiredis_cluster_ssl.pc.in hiredis_cluster_ssl.pc @ONLY)
+  configure_file(valkeycluster_ssl.pc.in valkeycluster_ssl.pc @ONLY)
 
-  install(TARGETS hiredis_cluster_ssl
-    EXPORT hiredis_cluster_ssl-targets
+  install(TARGETS valkeycluster_ssl
+    EXPORT valkeycluster_ssl-targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  install(FILES hircluster_ssl.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hiredis_cluster)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster_ssl.pc
+  install(FILES valkeycluster_ssl.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/valkeycluster)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster_ssl.pc
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-  export(EXPORT hiredis_cluster_ssl-targets
-    FILE ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster_ssl-targets.cmake
-    NAMESPACE hiredis_cluster::)
-  set(CMAKE_CONF_INSTALL_DIR share/hiredis_cluster_ssl)
-  configure_package_config_file(hiredis_cluster_ssl-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster_ssl-config.cmake
+  export(EXPORT valkeycluster_ssl-targets
+    FILE ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster_ssl-targets.cmake
+    NAMESPACE valkeycluster::)
+  set(CMAKE_CONF_INSTALL_DIR share/valkeycluster_ssl)
+  configure_package_config_file(valkeycluster_ssl-config.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster_ssl-config.cmake
     INSTALL_DESTINATION ${CMAKE_CONF_INSTALL_DIR}
     PATH_VARS INCLUDE_INSTALL_DIR)
-  install(EXPORT hiredis_cluster_ssl-targets
-    FILE hiredis_cluster_ssl-targets.cmake
-    NAMESPACE hiredis_cluster::
+  install(EXPORT valkeycluster_ssl-targets
+    FILE valkeycluster_ssl-targets.cmake
+    NAMESPACE valkeycluster::
     DESTINATION ${CMAKE_CONF_INSTALL_DIR})
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/hiredis_cluster_ssl-config.cmake
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/valkeycluster_ssl-config.cmake
     DESTINATION ${CMAKE_CONF_INSTALL_DIR})
 endif()

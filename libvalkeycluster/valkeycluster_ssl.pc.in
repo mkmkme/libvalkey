@@ -2,11 +2,11 @@ prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
-pkgincludedir=${includedir}/hiredis_cluster
+pkgincludedir=${includedir}/valkeycluster
 
-Name: hiredis_cluster_ssl
-Description: SSL support for hiredis-cluster
+Name: valkeycluster_ssl
+Description: SSL support for libvalkeycluster
 Version: @PROJECT_VERSION@
-Requires: hiredis_cluster
-Libs: -L${libdir} -lhiredis_cluster_ssl
-Libs.private: -lhiredis_ssl -lssl -lcrypto
+Requires: valkeycluster
+Libs: -L${libdir} -lvalkeycluster_ssl
+Libs.private: -lvalkey_ssl -lssl -lcrypto

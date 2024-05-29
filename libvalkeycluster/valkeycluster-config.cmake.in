@@ -1,13 +1,13 @@
 @PACKAGE_INIT@
 
-set_and_check(hiredis_cluster_INCLUDEDIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+set_and_check(valkeycluster_INCLUDEDIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
 
-if(NOT TARGET hiredis_cluster::hiredis_cluster)
-  include(${CMAKE_CURRENT_LIST_DIR}/hiredis_cluster-targets.cmake)
+if(NOT TARGET valkeycluster::valkeycluster)
+  include(${CMAKE_CURRENT_LIST_DIR}/valkeycluster-targets.cmake)
 endif()
 
-set(hiredis_cluster_LIBRARIES hiredis_cluster::hiredis_cluster)
-set(hiredis_cluster_INCLUDE_DIRS ${hiredis_cluster_INCLUDEDIR})
+set(valkeycluster_LIBRARIES valkeycluster::valkeycluster)
+set(valkeycluster_INCLUDE_DIRS ${valkeycluster_INCLUDEDIR})
 
-check_required_components(hiredis_cluster)
+check_required_components(valkeycluster)
 
