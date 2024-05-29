@@ -1,49 +1,10 @@
-# Hiredis-cluster
+# Libvalkeycluster
 
-Hiredis-cluster is a C client library for cluster deployments of the
-[Redis](http://redis.io/) database.
+Libvalkeycluster is a C client library for cluster deployments of the
+[Valkey](https://valkey.io/) database.
 
-Hiredis-cluster is using [Hiredis](https://github.com/redis/hiredis) for the
-connections to each Redis node.
-
-Hiredis-cluster is a fork of Hiredis-vip, with the following improvements:
-
-* The C library `hiredis` is an external dependency rather than a builtin part
-  of the cluster client, meaning that the latest `hiredis` can be used.
-* Support for SSL/TLS introduced in Redis 6
-* Support for IPv6
-* Support authentication using AUTH
-* Uses CMake (3.11+) as the primary build system, but optionally Make can be used directly
-* Code style guide (using clang-format)
-* Improved testing
-* Memory leak corrections and allocation failure handling
-* Low-level API for sending commands to specific node
-
-## Features
-
-* Redis Cluster
-    * Connect to a Redis cluster and run commands.
-
-* Multi-key commands
-    * Support `MSET`, `MGET` and `DEL`.
-    * Multi-key commands will be processed and sent to slot owning nodes.
-      (This breaks the atomicity of the commands if the keys reside on different
-      nodes so if atomicity is important, use these only with keys in the same
-      cluster slot.)
-
-* Pipelining
-    * Send multiple commands at once to speed up queries.
-    * Supports multi-key commands described in above bullet.
-
-* Asynchronous API
-    * Send commands asynchronously and let a callback handle the response.
-    * Needs an external event loop system that can be attached using an adapter.
-
-* SSL/TLS
-    * Connect to Redis nodes using SSL/TLS (supported from Redis 6)
-
-* IPv6
-    * Handles clusters on IPv6 networks
+Libvalkeycluster is using [Libvalkey](https://github.com/valkey-io/libvalkey) for the
+connections to each Valkey node.
 
 ## Build instructions
 
@@ -53,20 +14,19 @@ Prerequisites:
 * CMake and GNU Make (but see [Alternative build using Makefile
   directly](#alternative-build-using-makefile-directly) below for how to build
   without CMake)
-* [hiredis >= v1.0.0](https://github.com/redis/hiredis); downloaded automatically by
-  default, see [build options](#build-options) to disable.
+* [libvalkey](https://github.com/valkey-io/libvalkey).
 * [libevent](https://libevent.org/) (`libevent-dev` in Debian); can be avoided
   if building without tests (DISABLE_TESTS=ON)
 * OpenSSL (`libssl-dev` in Debian) if building with TLS support
 
-Hiredis-cluster will be built as a shared library `libhiredis_cluster.so` and
-it depends on the hiredis shared library `libhiredis.so`.
+libvalkeycluster will be built as a shared library `libvalkeycluster.so` and
+it depends on the libvalkey shared library `libvalkey.so`.
 
-When SSL/TLS support is enabled an extra library `libhiredis_cluster_ssl.so`
-is built, which depends on the hiredis SSL support library `libhiredis_ssl.a`.
+When SSL/TLS support is enabled an extra library `libvalkeycluster_ssl.so`
+is built, which depends on the libvalkey SSL support library `libvalkey_ssl.a`.
 
-A user project that needs SSL/TLS support should link to both `libhiredis_cluster.so`
-and `libhiredis_cluster_ssl.so` to enable the SSL/TLS configuration API.
+A user project that needs SSL/TLS support should link to both `libvalkeycluster.so`
+and `libvalkeycluster_ssl.so` to enable the SSL/TLS configuration API.
 
 ```sh
 $ mkdir build; cd build
@@ -78,20 +38,12 @@ $ make
 
 The following CMake options are available:
 
-* `DOWNLOAD_HIREDIS`
-  * `OFF` CMake will search for an already installed hiredis (for example the
-    the Debian package `libhiredis-dev`) for header files and linkage.
-  * `ON` (default) hiredis will be downloaded from
-    [Github](https://github.com/redis/hiredis), built and installed locally in
-    the build folder.
 * `ENABLE_SSL`
   * `OFF` (default)
-  * `ON` Enable SSL/TLS support and build its tests (also affect hiredis when
-    `DOWNLOAD_HIREDIS=ON`).
+  * `ON` Enable SSL/TLS support and build its tests.
 * `DISABLE_TESTS`
   * `OFF` (default)
-  * `ON` Disable compilation of tests (also affect hiredis when
-    `DOWNLOAD_HIREDIS=ON`).
+  * `ON` Disable compilation of tests.
 * `ENABLE_IPV6_TESTS`
   * `OFF` (default)
   * `ON` Enable IPv6 tests. Requires that IPv6 is
@@ -115,11 +67,11 @@ Options needs to be set with the `-D` flag when generating makefiles, e.g.
 ### Build details
 
 The build uses CMake's [find_package](https://cmake.org/cmake/help/latest/command/find_package.html#search-procedure)
-to search for a `hiredis` installation. CMake will search for a `hiredis`
-installation in the default paths, searching for a file called `hiredis-config.cmake`.
+to search for a `libvalkey` installation. CMake will search for a `libvalkey`
+installation in the default paths, searching for a file called `valkey-config.cmake`.
 The default search path can be altered via `CMAKE_PREFIX_PATH` or
 as described in the CMake docs; a specific path can be set using a flag like:
-`-Dhiredis_DIR:PATH=${MY_DIR}/hiredis/share/hiredis`
+`-Dvalkey_DIR:PATH=${MY_DIR}/valkey/share/valkey`
 
 See `examples/using_cmake_separate/build.sh` or
 `examples/using_cmake_externalproject/build.sh` for alternative CMake builds.
@@ -128,31 +80,30 @@ See `examples/using_cmake_separate/build.sh` or
 
 The list of commands and the position of the first key in the command line is
 defined in `cmddef.h` which is included in this repo. It has been generated
-using the JSON files describing the syntax of each command in the Redis
-repository, which makes sure hiredis-cluster supports all commands in Redis, at
+using the JSON files describing the syntax of each command in the Valkey
+repository, which makes sure libvalkeycluster supports all commands in Valkey, at
 least in terms of cluster routing. To add support for custom commands defined in
-Redis modules, you can regenerate `cmddef.h` using the script `gencommands.py`.
-Use the JSON files from Redis and any additional files on the same format as
+Valkey modules, you can regenerate `cmddef.h` using the script `gencommands.py`.
+Use the JSON files from Valkey and any additional files on the same format as
 arguments to the script. For details, see the comments inside `gencommands.py`.
 
 ### Alternative build using Makefile directly
 
 When a simpler build setup is preferred a provided Makefile can be used directly
-when building. A benefit of this, instead of using CMake, is that it also provides
-a static library, a similar limitation exists in the CMake files in hiredis v1.0.0.
+when building.
 
 The only option that exists in the Makefile is to enable SSL/TLS support via `USE_SSL=1`
 
-By default the hiredis library (and headers) installed on the system is used,
+By default the libvalkey library (and headers) installed on the system is used,
 but alternative installations can be used by defining the compiler flags
 `CFLAGS` and `LDFLAGS`.
 
 See [`examples/using_make/build.sh`](examples/using_make/build.sh) for an
-example build using an alternative hiredis installation.
+example build using an alternative libvalkey installation.
 
 Build failures like
-`hircluster_ssl.h:33:10: fatal error: hiredis/hiredis_ssl.h: No such file or directory`
-indicates that hiredis is not installed on the system, or that a given `CFLAGS` is wrong.
+`valkeycluster_ssl.h:33:10: fatal error: valkey/valkey_ssl.h: No such file or directory`
+indicates that libvalkey is not installed on the system, or that a given `CFLAGS` is wrong.
 Use the previous mentioned build example as reference.
 
 ### Running the tests
@@ -163,7 +114,7 @@ Prerequisites:
   Can be installed using `sudo cpan JSON`.
 * [Docker](https://docs.docker.com/engine/install/)
 
-Some tests needs a Redis cluster and that can be setup by the make targets
+Some tests needs a Valkey cluster and that can be setup by the make targets
 `start`/`stop`. The clusters will be setup using Docker and it may take a while
 for them to be ready and accepting requests. Run `make start` to start the
 clusters and then wait a few seconds before running `make test`.
@@ -175,7 +126,7 @@ $ make test
 $ make stop
 ```
 
-If you want to set up the Redis clusters manually they should run on localhost
+If you want to set up the Valkey clusters manually they should run on localhost
 using following access ports:
 
 | Cluster type                                        | Access port |
@@ -191,27 +142,27 @@ using following access ports:
 
 ### Connecting
 
-The function `redisClusterContextInit` is used to create a `redisClusterContext`.
+The function `valkeyClusterContextInit` is used to create a `valkeyClusterContext`.
 The context is where the state for connections is kept.
 
-The function `redisClusterSetOptionAddNodes` is used to add one or many Redis Cluster addresses.
+The function `valkeyClusterSetOptionAddNodes` is used to add one or many Valkey Cluster addresses.
 
-The functions `redisClusterSetOptionUsername` and
-`redisClusterSetOptionPassword` are used to configure authentication, causing
-the AUTH command to be sent on every new connection to Redis.
+The functions `valkeyClusterSetOptionUsername` and
+`valkeyClusterSetOptionPassword` are used to configure authentication, causing
+the AUTH command to be sent on every new connection to Valkey.
 
-For more options, see the file [`hircluster.h`](hircluster.h).
+For more options, see the file [`valkeycluster.h`](valkeycluster.h).
 
-The function `redisClusterConnect2` is used to connect to the Redis Cluster.
+The function `valkeyClusterConnect2` is used to connect to the Valkey Cluster.
 
-The `redisClusterContext` struct has an integer `err` field that is non-zero when the connection is
+The `valkeyClusterContext` struct has an integer `err` field that is non-zero when the connection is
 in an error state. The field `errstr` will contain a string with a description of the error.
-After trying to connect to Redis using `redisClusterContext` you should check the `err` field to see
+After trying to connect to Valkey using `valkeyClusterContext` you should check the `err` field to see
 if establishing the connection was successful:
 ```c
-redisClusterContext *cc = redisClusterContextInit();
-redisClusterSetOptionAddNodes(cc, "127.0.0.1:6379,127.0.0.1:6380");
-redisClusterConnect2(cc);
+valkeyClusterContext *cc = valkeyClusterContextInit();
+valkeyClusterSetOptionAddNodes(cc, "127.0.0.1:6379,127.0.0.1:6380");
+valkeyClusterConnect2(cc);
 if (cc != NULL && cc->err) {
     printf("Error: %s\n", cc->errstr);
     // handle error
@@ -223,20 +174,20 @@ if (cc != NULL && cc->err) {
 There is a hook to get notified when certain events occur.
 
 ```c
-int redisClusterSetEventCallback(redisClusterContext *cc,
-                                 void(fn)(const redisClusterContext *cc, int event,
+int valkeyClusterSetEventCallback(valkeyClusterContext *cc,
+                                 void(fn)(const valkeyClusterContext *cc, int event,
                                           void *privdata),
                                  void *privdata);
 ```
 
 The callback is called with `event` set to one of the following values:
 
-* `HIRCLUSTER_EVENT_SLOTMAP_UPDATED` when the slot mapping has been updated;
-* `HIRCLUSTER_EVENT_READY` when the slot mapping has been fetched for the first
+* `VALKEYCLUSTER_EVENT_SLOTMAP_UPDATED` when the slot mapping has been updated;
+* `VALKEYCLUSTER_EVENT_READY` when the slot mapping has been fetched for the first
   time and the client is ready to accept commands, useful when initiating the
-  client with `redisClusterAsyncConnect2()` where a client is not immediately
+  client with `valkeyClusterAsyncConnect2()` where a client is not immediately
   ready after a successful call;
-* `HIRCLUSTER_EVENT_FREE_CONTEXT` when the cluster context is being freed, so
+* `VALKEYCLUSTER_EVENT_FREE_CONTEXT` when the cluster context is being freed, so
   that the user can free the event privdata.
 
 #### Events per connection
@@ -246,63 +197,63 @@ This is useful for applying socket options or access endpoint information for a 
 The callback is registered using the following function:
 
 ```c
-int redisClusterSetConnectCallback(redisClusterContext *cc,
-                                   void(fn)(const redisContext *c, int status));
+int valkeyClusterSetConnectCallback(valkeyClusterContext *cc,
+                                   void(fn)(const valkeyContext *c, int status));
 ```
 
-The callback is called just after connect, before TLS handshake and Redis authentication.
+The callback is called just after connect, before TLS handshake and Valkey authentication.
 
-On successful connection, `status` is set to `REDIS_OK` and the redisContext
-(defined in hiredis.h) can be used, for example, to see which IP and port it's
+On successful connection, `status` is set to `VALKEY_OK` and the valkeyContext
+(defined in valkey.h) can be used, for example, to see which IP and port it's
 connected to or to set socket options directly on the file descriptor which can
 be accessed as `c->fd`.
 
 On failed connection attempt, this callback is called with `status` set to
-`REDIS_ERR`. The `err` field in the `redisContext` can be used to find out
+`VALKEY_ERR`. The `err` field in the `valkeyContext` can be used to find out
 the cause of the error.
 
 ### Sending commands
 
-The function `redisClusterCommand` takes a format similar to printf.
+The function `valkeyClusterCommand` takes a format similar to printf.
 In the simplest form it is used like:
 ```c
-reply = redisClusterCommand(clustercontext, "SET foo bar");
+reply = valkeyClusterCommand(clustercontext, "SET foo bar");
 ```
 
 The specifier `%s` interpolates a string in the command, and uses `strlen` to
 determine the length of the string:
 ```c
-reply = redisClusterCommand(clustercontext, "SET foo %s", value);
+reply = valkeyClusterCommand(clustercontext, "SET foo %s", value);
 ```
-Internally, hiredis-cluster splits the command in different arguments and will
-convert it to the protocol used to communicate with Redis.
+Internally, libvalkeycluster splits the command in different arguments and will
+convert it to the protocol used to communicate with Valkey.
 One or more spaces separates arguments, so you can use the specifiers
 anywhere in an argument:
 ```c
-reply = redisClusterCommand(clustercontext, "SET key:%s %s", myid, value);
+reply = valkeyClusterCommand(clustercontext, "SET key:%s %s", myid, value);
 ```
 
 Commands will be sent to the cluster node that the client perceives handling the given key.
-If the cluster topology has changed the Redis node might respond with a redirection error
+If the cluster topology has changed the Valkey node might respond with a redirection error
 which the client will handle, update its slotmap and resend the command to correct node.
 The reply will in this case arrive from the correct node.
 
 If a node is unreachable, for example if the command times out or if the connect
 times out, it can indicated that there has been a failover and the node is no
-longer part of the cluster. In this case, `redisClusterCommand` returns NULL and
-sets `err` and `errstr` on the cluster context, but additionally, hiredis
+longer part of the cluster. In this case, `valkeyClusterCommand` returns NULL and
+sets `err` and `errstr` on the cluster context, but additionally, libvalkey
 cluster schedules a slotmap update to be performed when the next command is
 sent. That means that if you try the same command again, there is a good chance
 the command will be sent to another node and the command may succeed.
 
 ### Sending multi-key commands
 
-Hiredis-cluster supports mget/mset/del multi-key commands.
-The command will be splitted per slot and sent to correct Redis nodes.
+libvalkeycluster supports mget/mset/del multi-key commands.
+The command will be splitted per slot and sent to correct Valkey nodes.
 
 Example:
 ```c
-reply = redisClusterCommand(clustercontext, "mget %s %s %s %s", key1, key2, key3, key4);
+reply = valkeyClusterCommand(clustercontext, "mget %s %s %s %s", key1, key2, key3, key4);
 ```
 
 ### Sending commands to a specific node
@@ -310,87 +261,87 @@ reply = redisClusterCommand(clustercontext, "mget %s %s %s %s", key1, key2, key3
 When there is a need to send commands to a specific node, the following low-level API can be used.
 
 ```c
-reply = redisClusterCommandToNode(clustercontext, node, "DBSIZE");
+reply = valkeyClusterCommandToNode(clustercontext, node, "DBSIZE");
 ```
 
-This function handles printf like arguments similar to `redisClusterCommand()`, but will
+This function handles printf like arguments similar to `valkeyClusterCommand()`, but will
 only attempt to send the command to the given node and will not perform redirects or retries.
 
 If the command times out or the connection to the node fails, a slotmap update
 is scheduled to be performed when the next command is sent.
-`redisClusterCommandToNode` also performs a slotmap update if it has previously
+`valkeyClusterCommandToNode` also performs a slotmap update if it has previously
 been scheduled.
 
 ### Teardown
 
 To disconnect and free the context the following function can be used:
 ```c
-void redisClusterFree(redisClusterContext *cc);
+void valkeyClusterFree(valkeyClusterContext *cc);
 ```
 This function closes the sockets and deallocates the context.
 
 ### Cluster pipelining
 
-The function `redisClusterGetReply` is exported as part of the Hiredis API and can be used
+The function `valkeyClusterGetReply` is exported as part of the Libvalkey API and can be used
 when a reply is expected on the socket. To pipeline commands, the only things that needs
 to be done is filling up the output buffer. For this cause, the following commands can be used that
-are identical to the `redisClusterCommand` family, apart from not returning a reply:
+are identical to the `valkeyClusterCommand` family, apart from not returning a reply:
 ```c
-int redisClusterAppendCommand(redisClusterContext *cc, const char *format, ...);
-int redisClusterAppendCommandArgv(redisClusterContext *cc, int argc, const char **argv);
+int valkeyClusterAppendCommand(valkeyClusterContext *cc, const char *format, ...);
+int valkeyClusterAppendCommandArgv(valkeyClusterContext *cc, int argc, const char **argv);
 
 /* Send a command to a specific cluster node */
-int redisClusterAppendCommandToNode(redisClusterContext *cc, redisClusterNode *node,
+int valkeyClusterAppendCommandToNode(valkeyClusterContext *cc, valkeyClusterNode *node,
                                     const char *format, ...);
 ```
-After calling either function one or more times, `redisClusterGetReply` can be used to receive the
-subsequent replies. The return value for this function is either `REDIS_OK` or `REDIS_ERR`, where
+After calling either function one or more times, `valkeyClusterGetReply` can be used to receive the
+subsequent replies. The return value for this function is either `VALKEY_OK` or `VALKEY_ERR`, where
 the latter means an error occurred while reading a reply. Just as with the other commands,
 the `err` field in the context can be used to find out what the cause of this error is.
 ```c
-void redisClusterReset(redisClusterContext *cc);
+void valkeyClusterReset(valkeyClusterContext *cc);
 ```
-Warning: You must call `redisClusterReset` function after one pipelining anyway.
+Warning: You must call `valkeyClusterReset` function after one pipelining anyway.
 
-Warning: Calling `redisClusterReset` without pipelining first will reset all Redis connections.
+Warning: Calling `valkeyClusterReset` without pipelining first will reset all Valkey connections.
 
 The following examples shows a simple cluster pipeline:
 ```c
-redisReply *reply;
-redisClusterAppendCommand(clusterContext,"SET foo bar");
-redisClusterAppendCommand(clusterContext,"GET foo");
-redisClusterGetReply(clusterContext,&reply); // reply for SET
+valkeyReply *reply;
+valkeyClusterAppendCommand(clusterContext,"SET foo bar");
+valkeyClusterAppendCommand(clusterContext,"GET foo");
+valkeyClusterGetReply(clusterContext,&reply); // reply for SET
 freeReplyObject(reply);
-redisClusterGetReply(clusterContext,&reply); // reply for GET
+valkeyClusterGetReply(clusterContext,&reply); // reply for GET
 freeReplyObject(reply);
-redisClusterReset(clusterContext);
+valkeyClusterReset(clusterContext);
 ```
 
 ## Cluster asynchronous API
 
-Hiredis-cluster comes with an asynchronous cluster API that works with many event systems.
+Libvalkeycluster comes with an asynchronous cluster API that works with many event systems.
 Currently there are adapters that enables support for `libevent`, `libev`, `libuv`, `glib`
-and Redis Event Library (`ae`). For usage examples, see the test programs with the different
+and `ae`. For usage examples, see the test programs with the different
 event libraries `tests/ct_async_{libev,libuv,glib}.c`.
 
-The hiredis library has adapters for additional event systems that easily can be adapted
-for hiredis-cluster as well.
+The libvalkey library has adapters for additional event systems that easily can be adapted
+for libvalkeycluster as well.
 
 ### Connecting
 
 There are two alternative ways to initiate a cluster client which also determines
 how the client behaves during the initial connect.
 
-The first alternative is to use the function `redisClusterAsyncConnect`, which initially
+The first alternative is to use the function `valkeyClusterAsyncConnect`, which initially
 connects to the cluster in a blocking fashion and waits for the slotmap before returning.
 Any command sent by the user thereafter will create a new non-blocking connection,
 unless a non-blocking connection already exists to the destination.
-The function returns a pointer to a newly created `redisClusterAsyncContext` struct and
+The function returns a pointer to a newly created `valkeyClusterAsyncContext` struct and
 its `err` field should be checked to make sure the initial slotmap update was successful.
 
 ```c
 // Insufficient error handling for brevity.
-redisClusterAsyncContext *acc = redisClusterAsyncConnect("127.0.0.1:6379", HIRCLUSTER_FLAG_NULL);
+valkeyClusterAsyncContext *acc = valkeyClusterAsyncConnect("127.0.0.1:6379", VALKEYCLUSTER_FLAG_NULL);
 if (acc->err) {
     printf("error: %s\n", acc->errstr);
     exit(1);
@@ -398,15 +349,15 @@ if (acc->err) {
 
 // Attach an event engine. In this example we use libevent.
 struct event_base *base = event_base_new();
-redisClusterLibeventAttach(acc, base);
+valkeyClusterLibeventAttach(acc, base);
 ```
 
-The second alternative is to use `redisClusterAsyncContextInit` and `redisClusterAsyncConnect2`
+The second alternative is to use `valkeyClusterAsyncContextInit` and `valkeyClusterAsyncConnect2`
 which avoids the initial blocking connect. This connection alternative requires an attached
-event engine when `redisClusterAsyncConnect2` is called, but the connect and the initial
+event engine when `valkeyClusterAsyncConnect2` is called, but the connect and the initial
 slotmap update is done in a non-blocking fashion.
 
-This means that commands sent directly after `redisClusterAsyncConnect2` may fail
+This means that commands sent directly after `valkeyClusterAsyncConnect2` may fail
 because the initial slotmap has not yet been retrieved and the client doesn't know which
 cluster node to send the command to. You may use the [eventCallback](#events-per-cluster-context)
 to be notified when the slotmap is updated and the client is ready to accept commands.
@@ -414,16 +365,16 @@ An crude example of using the eventCallback can be found in [this testcase](test
 
 ```c
 // Insufficient error handling for brevity.
-redisClusterAsyncContext *acc = redisClusterAsyncContextInit();
+valkeyClusterAsyncContext *acc = valkeyClusterAsyncContextInit();
 
 // Add a cluster node address for the initial connect.
-redisClusterSetOptionAddNodes(acc->cc, "127.0.0.1:6379");
+valkeyClusterSetOptionAddNodes(acc->cc, "127.0.0.1:6379");
 
 // Attach an event engine. In this example we use libevent.
 struct event_base *base = event_base_new();
-redisClusterLibeventAttach(acc, base);
+valkeyClusterLibeventAttach(acc, base);
 
-if (redisClusterAsyncConnect2(acc) != REDIS_OK) {
+if (valkeyClusterAsyncConnect2(acc) != VALKEY_OK) {
     printf("error: %s\n", acc->errstr);
     exit(1);
 }
@@ -431,7 +382,7 @@ if (redisClusterAsyncConnect2(acc) != REDIS_OK) {
 
 #### Events per cluster context
 
-Use [`redisClusterSetEventCallback`](#events-per-cluster-context) with `acc->cc`
+Use [`valkeyClusterSetEventCallback`](#events-per-cluster-context) with `acc->cc`
 as the context to get notified when certain events occur.
 
 #### Events per connection
@@ -446,78 +397,78 @@ a disconnected connection (either because of an error or per user request).
 The callbacks are installed using the following functions:
 
 ```c
-int redisClusterAsyncSetConnectCallback(redisClusterAsyncContext *acc,
-                                        redisConnectCallback *fn);
-int redisClusterAsyncSetDisonnectCallback(redisClusterAsyncContext *acc,
-                                          redisConnectCallback *fn);
+int valkeyClusterAsyncSetConnectCallback(valkeyClusterAsyncContext *acc,
+                                        valkeyConnectCallback *fn);
+int valkeyClusterAsyncSetDisonnectCallback(valkeyClusterAsyncContext *acc,
+                                          valkeyConnectCallback *fn);
 ```
 
 The callback functions should have the following prototype,
-aliased to `redisConnectCallback`:
+aliased to `valkeyConnectCallback`:
 
 ```c
-void(const redisAsyncContext *ac, int status);
+void(const valkeyAsyncContext *ac, int status);
 ```
 
-Alternatively, if `hiredis` >= v1.1.0 is used, you set a connect callback
-that will be passed a non-const `redisAsyncContext*` on invocation (e.g.
+Alternatively, if `valkey` >= v1.1.0 is used, you set a connect callback
+that will be passed a non-const `valkeyAsyncContext*` on invocation (e.g.
 to be able to set a push callback on it).
 
 ```c
-int redisClusterAsyncSetConnectCallbackNC(redisClusterAsyncContext *acc,
-                                          redisConnectCallbackNC *fn);
+int valkeyClusterAsyncSetConnectCallbackNC(valkeyClusterAsyncContext *acc,
+                                          valkeyConnectCallbackNC *fn);
 ```
 
 The callback function should have the following prototype,
-aliased to `redisConnectCallbackNC`:
+aliased to `valkeyConnectCallbackNC`:
 ```c
-void(redisAsyncContext *ac, int status);
+void(valkeyAsyncContext *ac, int status);
 ```
 
-On a connection attempt, the `status` argument is set to `REDIS_OK`
+On a connection attempt, the `status` argument is set to `VALKEY_OK`
 when the connection was successful.
 The file description of the connection socket can be retrieved
-from a redisAsyncContext as `ac->c->fd`.
-On a disconnect, the `status` argument is set to `REDIS_OK`
+from a valkeyAsyncContext as `ac->c->fd`.
+On a disconnect, the `status` argument is set to `VALKEY_OK`
 when disconnection was initiated by the user,
-or `REDIS_ERR` when the disconnection was caused by an error.
-When it is `REDIS_ERR`, the `err` field in the context can be accessed
+or `VALKEY_ERR` when the disconnection was caused by an error.
+When it is `VALKEY_ERR`, the `err` field in the context can be accessed
 to find out the cause of the error.
 
 You don't need to reconnect in the disconnect callback.
-Hiredis-cluster will reconnect by itself when the next command for this Redis node is handled.
+Libvalkeycluster will reconnect by itself when the next command for this Valkey node is handled.
 
 Setting the connect and disconnect callbacks can only be done once per context.
-For subsequent calls it will return `REDIS_ERR`.
+For subsequent calls it will return `VALKEY_ERR`.
 
 ### Sending commands and their callbacks
 
 In an asynchronous cluster context, commands are automatically pipelined due to the nature of an event loop.
 Therefore, unlike the synchronous API, there is only a single way to send commands.
-Because commands are sent to Redis Cluster asynchronously, issuing a command requires a callback function
+Because commands are sent to Valkey Cluster asynchronously, issuing a command requires a callback function
 that is called when the reply is received. Reply callbacks should have the following prototype:
 ```c
-void(redisClusterAsyncContext *acc, void *reply, void *privdata);
+void(valkeyClusterAsyncContext *acc, void *reply, void *privdata);
 ```
 The `privdata` argument can be used to carry arbitrary data to the callback from the point where
 the command is initially queued for execution.
 
 The most commonly used functions to issue commands in an asynchronous context are:
 ```c
-int redisClusterAsyncCommand(redisClusterAsyncContext *acc,
-                             redisClusterCallbackFn *fn,
+int valkeyClusterAsyncCommand(valkeyClusterAsyncContext *acc,
+                             valkeyClusterCallbackFn *fn,
                              void *privdata, const char *format, ...);
-int redisClusterAsyncCommandArgv(redisClusterAsyncContext *acc,
-                                 redisClusterCallbackFn *fn, void *privdata,
+int valkeyClusterAsyncCommandArgv(valkeyClusterAsyncContext *acc,
+                                 valkeyClusterCallbackFn *fn, void *privdata,
                                  int argc, const char **argv,
                                  const size_t *argvlen);
-int redisClusterAsyncFormattedCommand(redisClusterAsyncContext *acc,
-                                      redisClusterCallbackFn *fn,
+int valkeyClusterAsyncFormattedCommand(valkeyClusterAsyncContext *acc,
+                                      valkeyClusterCallbackFn *fn,
                                       void *privdata, char *cmd, int len);
 ```
-These functions works like their blocking counterparts. The return value is `REDIS_OK` when the command
-was successfully added to the output buffer and `REDIS_ERR` otherwise. When the connection is being
-disconnected per user-request, no new commands may be added to the output buffer and `REDIS_ERR` is
+These functions works like their blocking counterparts. The return value is `VALKEY_OK` when the command
+was successfully added to the output buffer and `VALKEY_ERR` otherwise. When the connection is being
+disconnected per user-request, no new commands may be added to the output buffer and `VALKEY_ERR` is
 returned.
 
 If the reply for a command with a `NULL` callback is read, it is immediately freed. When the callback
@@ -531,19 +482,19 @@ All pending callbacks are called with a `NULL` reply when the context encountere
 When there is a need to send commands to a specific node, the following low-level API can be used.
 
 ```c
-int redisClusterAsyncCommandToNode(redisClusterAsyncContext *acc,
-                                   redisClusterNode *node,
-                                   redisClusterCallbackFn *fn, void *privdata,
+int valkeyClusterAsyncCommandToNode(valkeyClusterAsyncContext *acc,
+                                   valkeyClusterNode *node,
+                                   valkeyClusterCallbackFn *fn, void *privdata,
                                    const char *format, ...);
-int redisClusterAsyncCommandArgvToNode(redisClusterAsyncContext *acc,
-                                       redisClusterNode *node,
-                                       redisClusterCallbackFn *fn,
+int valkeyClusterAsyncCommandArgvToNode(valkeyClusterAsyncContext *acc,
+                                       valkeyClusterNode *node,
+                                       valkeyClusterCallbackFn *fn,
                                        void *privdata, int argc,
                                        const char **argv,
                                        const size_t *argvlen);
-int redisClusterAsyncFormattedCommandToNode(redisClusterAsyncContext *acc,
-                                            redisClusterNode *node,
-                                            redisClusterCallbackFn *fn,
+int valkeyClusterAsyncFormattedCommandToNode(valkeyClusterAsyncContext *acc,
+                                            valkeyClusterNode *node,
+                                            valkeyClusterCallbackFn *fn,
                                             void *privdata, char *cmd, int len);
 ```
 
@@ -554,13 +505,13 @@ but communication errors will trigger a slotmap update just like the commonly us
 
 Asynchronous cluster connections can be terminated using:
 ```c
-void redisClusterAsyncDisconnect(redisClusterAsyncContext *acc);
+void valkeyClusterAsyncDisconnect(valkeyClusterAsyncContext *acc);
 ```
 When this function is called, connections are **not** immediately terminated. Instead, new
 commands are no longer accepted and connections are only terminated when all pending commands
 have been written to a socket, their respective replies have been read and their respective
 callbacks have been executed. After this, the disconnection callback is executed with the
-`REDIS_OK` status and the context object is freed.
+`VALKEY_OK` status and the context object is freed.
 
 ### Using event library *X*
 
@@ -571,14 +522,14 @@ See the `adapters/` directory for bindings to *libevent* and a range of other ev
 
 ### Cluster node iterator
 
-A `redisClusterNodeIterator` can be used to iterate on all known master nodes in a cluster context.
-First it needs to be initiated using `redisClusterInitNodeIterator()` and then you can repeatedly
-call `redisClusterNodeNext()` to get the next node from the iterator.
+A `valkeyClusterNodeIterator` can be used to iterate on all known master nodes in a cluster context.
+First it needs to be initiated using `valkeyClusterInitNodeIterator()` and then you can repeatedly
+call `valkeyClusterNodeNext()` to get the next node from the iterator.
 
 ```c
-void redisClusterInitNodeIterator(redisClusterNodeIterator *iter,
-                                  redisClusterContext *cc);
-redisClusterNode *redisClusterNodeNext(redisClusterNodeIterator *iter);
+void valkeyClusterInitNodeIterator(valkeyClusterNodeIterator *iter,
+                                  valkeyClusterContext *cc);
+valkeyClusterNode *valkeyClusterNodeNext(valkeyClusterNodeIterator *iter);
 ```
 
 The iterator will handle changes due to slotmap updates by restarting the iteration, but on the new
@@ -586,20 +537,20 @@ set of master nodes. There is no bookkeeping for already iterated nodes when a r
 which means that a node can be iterated over more than once depending on when the slotmap update happened
 and the change of cluster nodes.
 
-Note that when `redisClusterCommandToNode` is called, a slotmap update can
+Note that when `valkeyClusterCommandToNode` is called, a slotmap update can
 happen if it has been scheduled by the previous command, for example if the
-previous call to `redisClusterCommandToNode` timed out or the node wasn't
+previous call to `valkeyClusterCommandToNode` timed out or the node wasn't
 reachable.
 
 To detect when the slotmap has been updated, you can check if the iterator's
 slotmap version (`iter.route_version`) is equal to the current cluster context's
 slotmap version (`cc->route_version`). If it isn't, it means that the slotmap
 has been updated and the iterator will restart itself at the next call to
-`redisClusterNodeNext`.
+`valkeyClusterNodeNext`.
 
 Another way to detect that the slotmap has been updated is to [register an event
 callback](#events-per-cluster-context) and look for the event
-`HIRCLUSTER_EVENT_SLOTMAP_UPDATED`.
+`VALKEYCLUSTER_EVENT_SLOTMAP_UPDATED`.
 
 ### Random number generator
 
@@ -610,7 +561,7 @@ to get less predictability in the node selection.
 
 ### Allocator injection
 
-Hiredis-cluster uses hiredis allocation structure with configurable allocation and deallocation functions. By default they just point to libc (`malloc`, `calloc`, `realloc`, etc).
+Libvalkeycluster uses libvalkey's allocation structure with configurable allocation and deallocation functions. By default they just point to libc (`malloc`, `calloc`, `realloc`, etc).
 
 #### Overriding
 
@@ -618,7 +569,7 @@ If you have your own allocator or if you expect an abort in out-of-memory cases,
 you can configure the used functions in the following way:
 
 ```c
-hiredisAllocFuncs myfuncs = {
+valkeyAllocFuncs myfuncs = {
     .mallocFn = my_malloc,
     .callocFn = my_calloc,
     .reallocFn = my_realloc,
@@ -627,11 +578,11 @@ hiredisAllocFuncs myfuncs = {
 };
 
 // Override allocators (function returns current allocators if needed)
-hiredisAllocFuncs orig = hiredisSetAllocators(&myfuncs);
+valkeyAllocFuncs orig = valkeySetAllocators(&myfuncs);
 ```
 
 To reset the allocators to their default libc functions simply call:
 
 ```c
-hiredisResetAllocators();
+valkeyResetAllocators();
 ```
