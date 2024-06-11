@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __VALKEYCLUSTER_AE_H__
-#define __VALKEYCLUSTER_AE_H__
+#ifndef VALKEYCLUSTER_AE_H
+#define VALKEYCLUSTER_AE_H
 
 #include "../valkeycluster.h"
 #include <valkey/adapters/ae.h>
@@ -51,4 +51,4 @@ static int valkeyClusterAeAttach(aeEventLoop *loop,
     return VALKEY_OK;
 }
 
-#endif
+#endif /* VALKEYCLUSTER_AE_H */

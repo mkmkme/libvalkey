@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LIBVALKEYCLUSTER_LIBUV_H__
-#define __LIBVALKEYCLUSTER_LIBUV_H__
+#ifndef VALKEYCLUSTER_LIBUV_H
+#define VALKEYCLUSTER_LIBUV_H
 
 #include "../valkeycluster.h"
 #include <valkey/adapters/libuv.h>
@@ -51,4 +51,4 @@ static int valkeyClusterLibuvAttach(valkeyClusterAsyncContext *acc,
     return VALKEY_OK;
 }
 
-#endif
+#endif /* VALKEYCLUSTER_LIBUV_H */

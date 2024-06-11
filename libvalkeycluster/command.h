@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __COMMAND_H_
-#define __COMMAND_H_
+#ifndef VALKEYCLUSTER_COMMAND_H
+#define VALKEYCLUSTER_COMMAND_H
 
 #include <stdint.h>
 
@@ -108,4 +108,4 @@ void valkey_parse_cmd(struct cmd *r);
 struct cmd *command_get(void);
 void command_destroy(struct cmd *command);
 
-#endif
+#endif /* VALKEYCLUSTER_COMMAND_H */

@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __VKUTIL_H_
-#define __VKUTIL_H_
+#ifndef VALKEYCLUSTER_VKUTIL_H
+#define VALKEYCLUSTER_VKUTIL_H
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -178,4 +178,4 @@ int64_t vk_msec_now(void);
 
 uint16_t crc16(const char *buf, int len);
 
-#endif
+#endif /* VALKEYCLUSTER_VKUTIL_H */

@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _WIN32_HELPER_INCLUDE
-#define _WIN32_HELPER_INCLUDE
+#ifndef VALKEYCLUSTER_WIN32_H
+#define VALKEYCLUSTER_WIN32_H
 #ifdef _MSC_VER
 
 #include <winsock2.h> /* for struct timeval */
@@ -64,4 +64,4 @@
 
 #endif /* _WIN32 */
 
-#endif /* _WIN32_HELPER_INCLUDE */
+#endif /* VALKEYCLUSTER_WIN32_H */

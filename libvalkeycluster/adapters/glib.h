@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __VALKEYCLUSTER_GLIB_H__
-#define __VALKEYCLUSTER_GLIB_H__
+#ifndef VALKEYCLUSTER_GLIB_H
+#define VALKEYCLUSTER_GLIB_H
 
 #include "../valkeycluster.h"
 #include <valkey/adapters/glib.h>
@@ -58,4 +58,4 @@ static int valkeyClusterGlibAttach(valkeyClusterAsyncContext *acc,
     return VALKEY_OK;
 }
 
-#endif
+#endif /* VALKEYCLUSTER_GLIB_H */
