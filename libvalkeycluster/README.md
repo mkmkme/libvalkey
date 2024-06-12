@@ -246,16 +246,6 @@ cluster schedules a slotmap update to be performed when the next command is
 sent. That means that if you try the same command again, there is a good chance
 the command will be sent to another node and the command may succeed.
 
-### Sending multi-key commands
-
-libvalkeycluster supports mget/mset/del multi-key commands.
-The command will be splitted per slot and sent to correct Valkey nodes.
-
-Example:
-```c
-reply = valkeyClusterCommand(clustercontext, "mget %s %s %s %s", key1, key2, key3, key4);
-```
-
 ### Sending commands to a specific node
 
 When there is a need to send commands to a specific node, the following low-level API can be used.
