@@ -2375,51 +2375,30 @@ done:
     return reply;
 }
 
-/*
- * Split the command into subcommands by slot
- *
- * Returns slot_num
- * If slot_num < 0 or slot_num >=  VALKEYCLUSTER_SLOTS means this function runs
- * error; Otherwise if  the commands > 1 , slot_num is the last subcommand slot
- * number.
- */
-static int command_format_by_slot(valkeyClusterContext *cc, struct cmd *command) {
-    struct keypos *kp;
-    int key_count;
-    int slot_num = -1;
-
-    if (cc == NULL || command == NULL ||
-        command->cmd == NULL || command->clen <= 0) {
-        goto done;
+static int prepareCommand(valkeyClusterContext *cc, struct cmd *command) {
+    if (command->cmd == NULL || command->clen <= 0) {
+        return VALKEY_ERR;
     }
 
     valkey_parse_cmd(command);
     if (command->result == CMD_PARSE_ENOMEM) {
         valkeyClusterSetError(cc, VALKEY_ERR_OOM, "Out of memory");
-        goto done;
-    } else if (command->result != CMD_PARSE_OK) {
-        valkeyClusterSetError(cc, VALKEY_ERR_PROTOCOL, command->errstr);
-        goto done;
+        return VALKEY_ERR;
     }
-
-    key_count = vkarray_n(command->keys);
-
-    if (key_count <= 0) {
+    if (command->result != CMD_PARSE_OK) {
+        valkeyClusterSetError(cc, VALKEY_ERR_PROTOCOL, command->errstr);
+        return VALKEY_ERR;
+    }
+    if (vkarray_n(command->keys) <= 0) {
         valkeyClusterSetError(
             cc, VALKEY_ERR_OTHER,
             "No keys in command(must have keys for valkey cluster mode)");
-        goto done;
-    } else if (key_count == 1) {
-        kp = vkarray_get(command->keys, 0);
-        slot_num = keyHashSlot(kp->start, kp->end - kp->start);
-        command->slot_num = slot_num;
-
-        goto done;
+        return VALKEY_ERR;
     }
 
-done:
-
-    return slot_num;
+    struct keypos *kp = vkarray_get(command->keys, 0);
+    command->slot_num = keyHashSlot(kp->start, kp->end - kp->start);
+    return VALKEY_OK;
 }
 
 /* Deprecated function, replaced with valkeyClusterSetOptionMaxRetry() */
@@ -2457,7 +2436,6 @@ int valkeyClusterSetEventCallback(valkeyClusterContext *cc,
 void *valkeyClusterFormattedCommand(valkeyClusterContext *cc, char *cmd,
                                     int len) {
     valkeyReply *reply = NULL;
-    int slot_num;
     struct cmd *command = NULL;
 
     if (cc == NULL) {
@@ -2473,15 +2451,10 @@ void *valkeyClusterFormattedCommand(valkeyClusterContext *cc, char *cmd,
     if (command == NULL) {
         goto oom;
     }
-
     command->cmd = cmd;
     command->clen = len;
 
-    slot_num = command_format_by_slot(cc, command);
-    if (slot_num < 0) {
-        goto error;
-    } else if (slot_num >= VALKEYCLUSTER_SLOTS) {
-        valkeyClusterSetError(cc, VALKEY_ERR_OTHER, "slot_num is out of range");
+    if (prepareCommand(cc, command) != VALKEY_OK) {
         goto error;
     }
 
@@ -2620,7 +2593,6 @@ void *valkeyClusterCommandArgv(valkeyClusterContext *cc, int argc,
 
 int valkeyClusterAppendFormattedCommand(valkeyClusterContext *cc, char *cmd,
                                         int len) {
-    int slot_num;
     struct cmd *command = NULL;
 
     if (cc->requests == NULL) {
@@ -2635,16 +2607,10 @@ int valkeyClusterAppendFormattedCommand(valkeyClusterContext *cc, char *cmd,
     if (command == NULL) {
         goto oom;
     }
-
     command->cmd = cmd;
     command->clen = len;
 
-    slot_num = command_format_by_slot(cc, command);
-
-    if (slot_num < 0) {
-        goto error;
-    } else if (slot_num >= VALKEYCLUSTER_SLOTS) {
-        valkeyClusterSetError(cc, VALKEY_ERR_OTHER, "slot_num is out of range");
+    if (prepareCommand(cc, command) != VALKEY_OK) {
         goto error;
     }
 
@@ -3518,7 +3484,6 @@ int valkeyClusterAsyncFormattedCommand(valkeyClusterAsyncContext *acc,
 
     valkeyClusterContext *cc;
     int status = VALKEY_OK;
-    int slot_num;
     valkeyClusterNode *node;
     valkeyAsyncContext *ac;
     struct cmd *command = NULL;
@@ -3552,18 +3517,12 @@ int valkeyClusterAsyncFormattedCommand(valkeyClusterAsyncContext *acc,
     memcpy(command->cmd, cmd, len);
     command->clen = len;
 
-    slot_num = command_format_by_slot(cc, command);
-
-    if (slot_num < 0) {
+    if (prepareCommand(cc, command) != VALKEY_OK) {
         valkeyClusterAsyncSetError(acc, cc->err, cc->errstr);
-        goto error;
-    } else if (slot_num >= VALKEYCLUSTER_SLOTS) {
-        valkeyClusterAsyncSetError(acc, VALKEY_ERR_OTHER,
-                                   "slot_num is out of range");
         goto error;
     }
 
-    node = node_get_by_table(cc, (uint32_t)slot_num);
+    node = node_get_by_table(cc, (uint32_t)command->slot_num);
     if (node == NULL) {
         /* Initiate a slotmap update since the slot is not served. */
         throttledUpdateSlotMapAsync(acc, NULL);
