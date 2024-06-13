@@ -1596,8 +1596,8 @@ int valkeyClusterConnect2(valkeyClusterContext *cc) {
     return valkeyClusterUpdateSlotmap(cc);
 }
 
-valkeyContext *ctx_get_by_node(valkeyClusterContext *cc,
-                               valkeyClusterNode *node) {
+valkeyContext *valkeyClusterGetValkeyContext(valkeyClusterContext *cc,
+                                             valkeyClusterNode *node) {
     valkeyContext *c = NULL;
     if (node == NULL) {
         return NULL;
@@ -1709,7 +1709,7 @@ static int valkeyClusterAppendCommandInternal(valkeyClusterContext *cc,
         return VALKEY_ERR;
     }
 
-    c = ctx_get_by_node(cc, node);
+    c = valkeyClusterGetValkeyContext(cc, node);
     if (c == NULL) {
         return VALKEY_ERR;
     } else if (c->err) {
@@ -1874,7 +1874,7 @@ retry:
         }
     }
 
-    c = ctx_get_by_node(cc, node);
+    c = valkeyClusterGetValkeyContext(cc, node);
     if (c == NULL || c->err) {
         /* Failed to connect. Maybe there was a failover and this node is gone.
          * Update slotmap to find out. */
@@ -1886,7 +1886,7 @@ retry:
         if (node == NULL) {
             goto error;
         }
-        c = ctx_get_by_node(cc, node);
+        c = valkeyClusterGetValkeyContext(cc, node);
         if (c == NULL) {
             goto error;
         } else if (c->err) {
@@ -1962,7 +1962,7 @@ ask_retry:
                 }
             }
 
-            c = ctx_get_by_node(cc, node);
+            c = valkeyClusterGetValkeyContext(cc, node);
             if (c == NULL) {
                 goto error;
             } else if (c->err) {
@@ -1982,7 +1982,7 @@ ask_retry:
             freeReplyObject(reply);
             reply = NULL;
 
-            c = ctx_get_by_node(cc, node);
+            c = valkeyClusterGetValkeyContext(cc, node);
             if (c == NULL) {
                 goto error;
             } else if (c->err) {
@@ -2181,7 +2181,7 @@ void *valkeyClusterCommandToNode(valkeyClusterContext *cc,
     void *reply;
     int updating_slotmap = 0;
 
-    c = ctx_get_by_node(cc, node);
+    c = valkeyClusterGetValkeyContext(cc, node);
     if (c == NULL) {
         return NULL;
     } else if (c->err) {
@@ -2350,7 +2350,7 @@ int valkeyClusterAppendCommandToNode(valkeyClusterContext *cc,
         cc->requests->free = listCommandFree;
     }
 
-    c = ctx_get_by_node(cc, node);
+    c = valkeyClusterGetValkeyContext(cc, node);
     if (c == NULL) {
         return VALKEY_ERR;
     } else if (c->err) {
@@ -2438,7 +2438,7 @@ static int valkeyClusterSendAll(valkeyClusterContext *cc) {
             continue;
         }
 
-        c = ctx_get_by_node(cc, node);
+        c = valkeyClusterGetValkeyContext(cc, node);
         if (c == NULL) {
             continue;
         }
@@ -2669,8 +2669,9 @@ static void unlinkAsyncContextAndNode(void *data) {
     }
 }
 
-valkeyAsyncContext *actx_get_by_node(valkeyClusterAsyncContext *acc,
-                                     valkeyClusterNode *node) {
+valkeyAsyncContext *
+valkeyClusterGetValkeyAsyncContext(valkeyClusterAsyncContext *acc,
+                                   valkeyClusterNode *node) {
     valkeyAsyncContext *ac;
     int ret;
 
@@ -2953,7 +2954,7 @@ static int updateSlotMapAsync(valkeyClusterAsyncContext *acc,
         }
 
         /* Get libvalkey context, connect if needed */
-        ac = actx_get_by_node(acc, node);
+        ac = valkeyClusterGetValkeyAsyncContext(acc, node);
     }
     if (ac == NULL)
         goto error; /* Specific error already set */
@@ -3061,7 +3062,7 @@ static void valkeyClusterAsyncCallback(valkeyAsyncContext *ac, void *r,
             if (slot >= 0) {
                 cc->table[slot] = node;
             }
-            ac_retry = actx_get_by_node(acc, node);
+            ac_retry = valkeyClusterGetValkeyAsyncContext(acc, node);
 
             break;
         case CLUSTER_ERR_ASK:
@@ -3071,7 +3072,7 @@ static void valkeyClusterAsyncCallback(valkeyAsyncContext *ac, void *r,
                 goto done;
             }
 
-            ac_retry = actx_get_by_node(acc, node);
+            ac_retry = valkeyClusterGetValkeyAsyncContext(acc, node);
             if (ac_retry == NULL) {
                 /* Specific error already set */
                 goto done;
@@ -3189,7 +3190,7 @@ int valkeyClusterAsyncFormattedCommand(valkeyClusterAsyncContext *acc,
         goto error;
     }
 
-    ac = actx_get_by_node(acc, node);
+    ac = valkeyClusterGetValkeyAsyncContext(acc, node);
     if (ac == NULL) {
         /* Specific error already set */
         goto error;
@@ -3232,7 +3233,7 @@ int valkeyClusterAsyncFormattedCommandToNode(valkeyClusterAsyncContext *acc,
     cluster_async_data *cad = NULL;
     struct cmd *command = NULL;
 
-    ac = actx_get_by_node(acc, node);
+    ac = valkeyClusterGetValkeyAsyncContext(acc, node);
     if (ac == NULL) {
         /* Specific error already set */
         return VALKEY_ERR;
