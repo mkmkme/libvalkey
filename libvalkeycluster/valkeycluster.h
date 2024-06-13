@@ -63,7 +63,6 @@
 extern "C" {
 #endif
 
-struct dict;
 struct hilist;
 struct valkeyClusterAsyncContext;
 
@@ -251,9 +250,6 @@ int valkeyClusterUpdateSlotmap(valkeyClusterContext *cc);
 /* Internal functions */
 valkeyContext *ctx_get_by_node(valkeyClusterContext *cc,
                                valkeyClusterNode *node);
-struct dict *parse_cluster_nodes(valkeyClusterContext *cc, char *str,
-                                 int str_len);
-struct dict *parse_cluster_slots(valkeyClusterContext *cc, valkeyReply *reply);
 
 /*
  * Asynchronous API
