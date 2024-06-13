@@ -1719,22 +1719,6 @@ int valkeyClusterSetOptionAddNodes(valkeyClusterContext *cc,
     return VALKEY_OK;
 }
 
-/* Deprecated function, option has no effect. */
-int valkeyClusterSetOptionConnectBlock(valkeyClusterContext *cc) {
-    if (cc == NULL) {
-        return VALKEY_ERR;
-    }
-    return VALKEY_OK;
-}
-
-/* Deprecated function, option has no effect. */
-int valkeyClusterSetOptionConnectNonBlock(valkeyClusterContext *cc) {
-    if (cc == NULL) {
-        return VALKEY_ERR;
-    }
-    return VALKEY_OK;
-}
-
 /**
  * Configure a username used during authentication, see
  * the Valkey AUTH command.
@@ -2399,16 +2383,6 @@ static int prepareCommand(valkeyClusterContext *cc, struct cmd *command) {
     struct keypos *kp = vkarray_get(command->keys, 0);
     command->slot_num = keyHashSlot(kp->start, kp->end - kp->start);
     return VALKEY_OK;
-}
-
-/* Deprecated function, replaced with valkeyClusterSetOptionMaxRetry() */
-void valkeyClusterSetMaxRedirect(valkeyClusterContext *cc,
-                                 int max_retry_count) {
-    if (cc == NULL || max_retry_count <= 0) {
-        return;
-    }
-
-    cc->max_retry_count = max_retry_count;
 }
 
 int valkeyClusterSetConnectCallback(valkeyClusterContext *cc,
