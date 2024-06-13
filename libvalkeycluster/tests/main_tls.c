@@ -6,8 +6,8 @@
 #define CLUSTER_NODE_TLS "127.0.0.1:7300"
 
 int main(int argc, char **argv) {
-    UNUSED(argc);
-    UNUSED(argv);
+    (void)argc;
+    (void)argv;
 
     valkeySSLContext *ssl;
     valkeySSLContextError ssl_error;

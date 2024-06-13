@@ -51,8 +51,8 @@ void disconnectCallback(const valkeyAsyncContext *ac, int status) {
 }
 
 int main(int argc, char **argv) {
-    UNUSED(argc);
-    UNUSED(argv);
+    (void)argc;
+    (void)argv;
 
     valkeySSLContext *ssl;
     valkeySSLContextError ssl_error;

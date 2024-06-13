@@ -6,13 +6,13 @@
 #define CLUSTER_NODE "127.0.0.1:7000"
 
 void setCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 }
 
 void getCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 
@@ -31,8 +31,8 @@ void disconnectCallback(const valkeyAsyncContext *ac, int status) {
 }
 
 int main(int argc, char **argv) {
-    UNUSED(argc);
-    UNUSED(argv);
+    (void)argc;
+    (void)argv;
 
     valkeyClusterAsyncContext *acc =
         valkeyClusterAsyncConnect(CLUSTER_NODE, VALKEYCLUSTER_FLAG_NULL);

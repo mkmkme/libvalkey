@@ -41,7 +41,7 @@ void connectToValkey(valkeyClusterAsyncContext *acc) {
 }
 
 void replyCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
 
     if (reply == NULL) {
@@ -62,8 +62,8 @@ void replyCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
 }
 
 void sendNextCommand(int fd, short kind, void *arg) {
-    UNUSED(fd);
-    UNUSED(kind);
+    (void)fd;
+    (void)kind;
     valkeyClusterAsyncContext *acc = arg;
 
     char command[256];

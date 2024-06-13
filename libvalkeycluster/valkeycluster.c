@@ -2846,7 +2846,7 @@ int valkeyClusterAsyncSetDisconnectCallback(valkeyClusterAsyncContext *acc,
 /* Reply callback function for CLUSTER SLOTS */
 void clusterSlotsReplyCallback(valkeyAsyncContext *ac, void *r,
                                void *privdata) {
-    UNUSED(ac);
+    (void)ac;
     valkeyReply *reply = (valkeyReply *)r;
     valkeyClusterAsyncContext *acc = (valkeyClusterAsyncContext *)privdata;
     acc->lastSlotmapUpdateAttempt = vk_usec_now();
@@ -2867,7 +2867,7 @@ void clusterSlotsReplyCallback(valkeyAsyncContext *ac, void *r,
 /* Reply callback function for CLUSTER NODES */
 void clusterNodesReplyCallback(valkeyAsyncContext *ac, void *r,
                                void *privdata) {
-    UNUSED(ac);
+    (void)ac;
     valkeyReply *reply = (valkeyReply *)r;
     valkeyClusterAsyncContext *acc = (valkeyClusterAsyncContext *)privdata;
     acc->lastSlotmapUpdateAttempt = vk_usec_now();

@@ -283,7 +283,7 @@ typedef struct ExpectedResult {
 
 // Callback for Valkey connects and disconnects
 void callbackExpectOk(const valkeyAsyncContext *ac, int status) {
-    UNUSED(ac);
+    (void)ac;
     assert(status == VALKEY_OK);
 }
 

@@ -3,8 +3,8 @@
 #include <valkeycluster/valkeycluster.h>
 
 int main(int argc, char **argv) {
-    UNUSED(argc);
-    UNUSED(argv);
+    (void)argc;
+    (void)argv;
     struct timeval timeout = {1, 500000}; // 1.5s
 
     valkeyClusterContext *cc = valkeyClusterContextInit();

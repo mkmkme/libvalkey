@@ -8,7 +8,7 @@
 #define CLUSTER_NODE "127.0.0.1:7000"
 
 void getCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 
@@ -17,7 +17,7 @@ void getCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
 }
 
 void setCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 }
@@ -28,8 +28,8 @@ void connectCallback(const valkeyAsyncContext *ac, int status) {
 }
 
 void connectCallbackNC(valkeyAsyncContext *ac, int status) {
-    UNUSED(ac);
-    UNUSED(status);
+    (void)ac;
+    (void)status;
     /* The testcase expects a failure during registration of this
        non-const connect callback and it should never be called. */
     assert(0);

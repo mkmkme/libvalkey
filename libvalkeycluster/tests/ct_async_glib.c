@@ -8,13 +8,13 @@
 static GMainLoop *mainloop;
 
 void setCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 }
 
 void getCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
-    UNUSED(privdata);
+    (void)privdata;
     valkeyReply *reply = (valkeyReply *)r;
     ASSERT_MSG(reply != NULL, acc->errstr);
 
@@ -34,8 +34,8 @@ void disconnectCallback(const valkeyAsyncContext *ac, int status) {
 }
 
 int main(int argc, char **argv) {
-    UNUSED(argc);
-    UNUSED(argv);
+    (void)argc;
+    (void)argv;
 
     GMainContext *context = NULL;
     mainloop = g_main_loop_new(context, FALSE);

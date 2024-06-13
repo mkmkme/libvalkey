@@ -37,8 +37,6 @@
 #include <valkey/async.h>
 #include <valkey/valkey.h>
 
-#define UNUSED(x) (void)(x)
-
 #define LIBVALKEYCLUSTER_MAJOR 0
 #define LIBVALKEYCLUSTER_MINOR 14
 #define LIBVALKEYCLUSTER_PATCH 0

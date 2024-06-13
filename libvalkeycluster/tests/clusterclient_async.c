@@ -99,8 +99,8 @@ void replyCallback(valkeyClusterAsyncContext *acc, void *r, void *privdata) {
 }
 
 void sendNextCommand(int fd, short kind, void *arg) {
-    UNUSED(fd);
-    UNUSED(kind);
+    (void)fd;
+    (void)kind;
     valkeyClusterAsyncContext *acc = arg;
     int async = 0;
 
