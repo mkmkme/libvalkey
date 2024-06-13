@@ -1301,7 +1301,8 @@ valkeyClusterContext *valkeyClusterConnectWithTimeout(const char *addrs,
     return valkeyClusterConnectInternal(cc, addrs);
 }
 
-int valkeyClusterSetOptionAddNode(valkeyClusterContext *cc, const char *addr) {
+static int valkeyClusterSetOptionAddNode(valkeyClusterContext *cc,
+                                         const char *addr) {
     dictEntry *node_entry;
     valkeyClusterNode *node = NULL;
     int port, ret;
